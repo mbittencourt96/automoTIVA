@@ -1,0 +1,402 @@
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "inc/hw_can.h"
+#include "inc/hw_ints.h"
+#include "driverlib/can.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "driverlib/uart.h"
+#include "driverlib/pin_map.h"
+
+#include "canUtil.h"
+#include "uart.h"
+#include "rtc.h"
+#include "gps.h"
+#include "rgb.h"
+#include "gsm.h"
+#include "timer_systick.h"
+#include "dataStore.h"
+
+//PID codes
+#define ENGINE_RPM 12
+#define ENGINE_TEMPERATURE 5
+#define VEHICLE_SPEED 13
+#define THROTTLE_POS 17
+#define FUEL_LEVEL 47
+#define ODOMETER 49
+#define ETH_PERCENTAGE 82
+
+int contador_erro_internet = 0;
+int contador_erro_gps = 0;
+int contador_erro_rtc = 0;
+int contador_erro_mem = 0;
+
+//Enumeration with possible states
+typedef enum {
+  CONFIG = 0,
+  WAITING_PID,
+  WAITING_DATE,
+  WAITING_GPS,
+  STORING,
+  SENDING,
+  SUCCESS  
+} STATE;
+
+//OBD parameters to be requested
+float engine_rpm = 0;
+float engine_temp = 0;
+float vehicle_speed = 0;
+float fuel_level = 0;
+float th_pos = 0;
+float odometer = 0;
+float eth_percentage = 0;
+float pids[7];
+
+//System clock
+uint32_t g_ui32SysClock;
+
+STATE currentState = CONFIG;
+
+//Datetime string
+char* datetime_str;
+
+//GPS Strings
+char* GPS_OutputStr = " ";
+char* location_str;
+
+int counter = 0;
+
+          
+void main(void) {  
+  
+  while(1)
+      {
+          switch (currentState)
+          {
+            case CONFIG:  
+           
+              //Define system clock as 120MHz
+              g_ui32SysClock = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
+                                              SYSCTL_OSC_MAIN |
+                                             SYSCTL_USE_PLL |
+                                             SYSCTL_CFG_VCO_240), 16000000);
+              
+              //Configure UART (terminal)
+              setupUART0(g_ui32SysClock,9600);
+              
+              setupUART7(g_ui32SysClock,9600);
+              
+              UARTSend(UART0_BASE,"Enter configuration state...",strlen("Enter configuration state..."));
+            
+              //Configure RGB Led
+              setupPWM_LEDS(g_ui32SysClock);
+
+              //Define as BLue LED
+              Color c = BLUE;
+              
+               //Blink Blue LED for 3 times
+               blinkLED(c,0.5,2);
+             
+              //Configure timer
+              setupTimer();
+             
+              //Configure GPS Module Peripheral with 9600 bps baud rate (UART comm)
+              GPS_setup_UART(g_ui32SysClock,9600);   
+         
+              //Configure RTC Module Peripheral (I2C Comm)
+              RTC_begin_I2C(g_ui32SysClock);
+              RTC_adjust_time(23,5,7,14,17,30,0);                              //Change here according to current time
+              
+              //Configure CAN Peripheral (CAN Controller)
+              configureCAN(g_ui32SysClock);
+              //Initialize CAN Bus to wait for messages
+              initCANMessages();
+              
+              //Init Flash Memory Queue
+              Queue *Segments = (Queue*) malloc(sizeof(Queue));
+              initQueue(Segments);
+             
+              //Blink Green LED
+              blinkLED(c,1,1);
+             
+              currentState = WAITING_PID;
+
+              break;
+          case WAITING_PID:
+              //Define as BLue LED
+               c = BLUE;
+              
+              //Blink Blue LED for 3 times to indicate we are entering this state
+              blinkLED(c,0.5,2);
+              
+              //Reset internet error counter
+               contador_erro_internet = 0;
+              
+              //Reset RTC error counter
+               contador_erro_rtc = 0;
+
+              //Request Engine RPM PID
+              requestPID(ENGINE_RPM);
+              delay_s(1);
+              engine_rpm = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              //Request Engine Temperature PID
+              requestPID(ENGINE_TEMPERATURE);
+              delay_s(1);
+              engine_temp = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              //Request Vehicle Speed PID
+              requestPID(VEHICLE_SPEED);
+              delay_s(1);
+              vehicle_speed = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              //Request Throttle position PID
+              requestPID(THROTTLE_POS);
+              delay_s(1);
+              th_pos = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              //Request Fuel Level PID
+              requestPID(FUEL_LEVEL);
+              delay_s(1);
+              fuel_level = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              //Request Fuel Level PID
+              requestPID(ODOMETER);
+              delay_s(1);
+              odometer = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              //Request Ethanol Percentage PID
+              requestPID(ETH_PERCENTAGE);
+              delay_s(1);
+              eth_percentage = readCANmessage();  //Read message that was received
+              delay_s(1);
+              
+              pids[0] = engine_rpm;
+              pids[1] = engine_temp;
+              pids[2] = vehicle_speed;
+              pids[3] = th_pos;
+              pids[4] = fuel_level;
+              pids[5] = odometer;
+              pids[6] = eth_percentage;
+              
+              if (engine_rpm == -1 && engine_temp == -1 &&  vehicle_speed == -1 &&
+                  th_pos == -1 && fuel_level == -1 && odometer == -1)  //None of the PIDs was received
+              {
+                UARTSend(UART0_BASE,"PIDs not received, trying again...",strlen("PIDs not received, trying again..."));
+                c = RED;
+                blinkLED(c,1,1);
+                currentState = WAITING_PID;
+              }
+              else   //At least one PID was received
+              {                
+                c = GREEN;
+                //Blink Green LED
+                blinkLED(c,1,1);
+                currentState = WAITING_DATE;
+              }      
+              break;
+          case WAITING_DATE:
+              //Define as BLue LED
+                c = BLUE;
+              
+              //Blink Blue LED for 3 times
+                blinkLED(c,0.5,2);    
+                datetime_str = RTC_now();
+              
+              if (strcmp(datetime_str,"Error") == 0)
+              {
+                currentState = WAITING_DATE;
+                c = RED;
+                blinkLED(c,1,1);
+                contador_erro_rtc++;
+                
+                if (contador_erro_rtc > 5)
+                {
+                  currentState = WAITING_PID;
+                }
+              }
+              else
+              {
+                c = GREEN;
+                blinkLED(c,1,1);   //Blink Green LED
+                currentState = WAITING_GPS;
+              }
+       
+              break;
+          case WAITING_GPS:
+            GPS_OutputStr = " ";
+            
+            do{
+              GPS_OutputStr = GPS_Read_UART();
+              contador_erro_gps++;
+            }while (strcmp(GPS_OutputStr,"GPS not available") == 0);
+            
+            if (contador_erro_gps < 5)
+            {
+              c = GREEN;
+              blinkLED(c,1,1);   //Blink Green LED
+              location_str = GPS_get_info(GPS_OutputStr);
+            }
+            else
+            {
+              c = RED;
+              blinkLED(c,1,1);   //Blink Red LED
+              location_str = " ";
+            }
+            
+            contador_erro_gps = 0;
+            currentState = STORING;
+            
+            break;
+          case STORING:
+              //Blink yellow LED
+              c = YELLOW;
+              blinkLED(c,0.5,2);
+              
+              char* pids_str;
+              
+              char rpm_str[10];
+              sprintf(rpm_str, "%f", engine_rpm);
+              strncat(pids_str, rpm_str, strlen(rpm_str));
+           
+              strncat(pids_str, "*", 1);
+              
+              char temp_str[10]; 
+              sprintf(temp_str, "%f", engine_temp);
+              strncat(pids_str, temp_str, strlen(temp_str));
+              
+              strncat(pids_str, "*", 1);
+              
+              char veh_str[10]; 
+              sprintf(veh_str, "%f", vehicle_speed);
+              strncat(pids_str, veh_str, strlen(veh_str));
+              
+              strncat(pids_str, "*", 1);
+              
+              char fuel_str[10]; 
+              sprintf(fuel_str, "%f", fuel_level);
+              strncat(pids_str, fuel_str, strlen(fuel_str));
+              
+              strncat(pids_str, "*", 1);
+              
+              char odometer_str[10]; 
+              sprintf(odometer_str, "%f", odometer);
+              strncat(pids_str, odometer_str, strlen(odometer_str));
+              
+              strncat(pids_str, "*", 1);
+              
+              char eth_str[10]; 
+              sprintf(eth_str, "%f", eth_percentage);
+              strncat(pids_str, eth_str, strlen(eth_str));
+              
+              strncat(pids_str, "*", 1);
+ 
+              strncat(pids_str, GPS_OutputStr, strlen(GPS_OutputStr));
+              
+              strncat(pids_str, "*", 1);
+              
+              strncat(pids_str, datetime_str, strlen(datetime_str));
+              
+              strncat(pids_str, "\n", 1);
+              
+              bool stored = storeStringInFlash(pids_str,Segments);
+              
+              if(stored)
+              {
+                c = GREEN;
+                blinkLED(c,1,1);
+                currentState = SENDING;
+              }
+              else
+              {
+                contador_erro_mem++;
+                currentState = STORING;
+              }
+              
+              if (contador_erro_mem > 3) 
+              {
+                contador_erro_mem = 0;
+                currentState = SENDING;
+                c = RED;
+                blinkLED(c,1,1);
+              }
+             
+              break;
+          case SENDING:
+              c = YELLOW;
+              
+              blinkLED(c,2,2);
+              
+              int k = 0;
+              
+              while(k < Segments->size)
+              {
+                uint32_t current_address;
+                
+                FlashSegment_t *curr = Segments->front;
+                current_address = curr->address;
+                
+                char* content = FlashRead(current_address);
+                
+                UARTSend(UART7_BASE,content,strlen(content));   //Send string with information to the ESP8266
+                
+                char confirmation[5];
+                
+                delay_s(2);
+                
+                char* result = UARTRead(UART7_BASE,confirmation);
+                
+                if (strcmp(result," ") == 0)
+                {
+                  contador_erro_internet++;
+                  
+                  if (contador_erro_internet > (Segments->size - 1))
+                  {
+                    break;
+                  }
+                }
+                
+                while(curr != NULL) 
+                {
+                  curr = curr->next;
+                }
+                
+                k++;
+              }
+              
+              if (contador_erro_internet > (Segments->size - 1))
+              {
+                 currentState = WAITING_PID;
+              }
+              else
+              {
+                  currentState = SUCCESS;
+              }
+              
+              break;
+          case SUCCESS:
+            c = GREEN;
+            blinkLED(c,1,3);
+            eraseFlash();
+            delay_s(10);   
+            currentState = WAITING_PID;
+            break;
+          default: 
+              break; 
+          }  
+          
+      }
+}
+  
