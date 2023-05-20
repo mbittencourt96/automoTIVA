@@ -125,7 +125,7 @@ int searchQueue(Queue *Segments, uint32_t address) {
 bool storeStringInFlash(char *string, Queue* Segments) 
 {
   
-    int i;
+    int i = 0;
     uint32_t address = FLASH_START_ADDRESS;
     uint32_t stringLength = strlen(string);
     
@@ -150,11 +150,13 @@ bool storeStringInFlash(char *string, Queue* Segments)
     
     uint32_t initialAddress = address;
     
+    int programmed;
+    
     for (int k = 0; k < number_parts; k++)
     {
       uint32_t* stringPart = p++;
       // Write part of the string (32 bits) to the current segment
-      FlashProgram(stringPart, address, 4);
+      programmed = FlashProgram(stringPart, address, 4);
       address = address + 4;
     }
     

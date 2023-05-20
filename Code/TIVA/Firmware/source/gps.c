@@ -55,7 +55,7 @@ char* GPS_Read_UART(void)
   
   if (UARTCharsAvail(GPS_UART))
   {
-   while(caract != '\n')
+   while(UARTCharsAvail(GPS_UART))
    {
       caract = (unsigned char) UARTCharGetNonBlocking(GPS_UART);
       

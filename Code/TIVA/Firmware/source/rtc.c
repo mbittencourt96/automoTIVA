@@ -392,7 +392,7 @@ void RTC_adjust_time(uint16_t year, uint8_t month, uint8_t dow, uint8_t day, uin
   RTC_write_I2C(bin2bcd(dow),0x03); 
   RTC_write_I2C(bin2bcd(day),0x04); 
   RTC_write_I2C(bin2bcd(month),0x05); 
-  //RTC_write_I2C(bin2bcd(year),0x06); 
+  RTC_write_I2C(bin2bcd(year),0x06); 
   
   RTC_read_I2C(RTC_STATUSREG);
   uint8_t status_reg = g_ui8MasterRxData[0];

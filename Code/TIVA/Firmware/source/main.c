@@ -49,26 +49,28 @@ typedef enum {
 } STATE;
 
 //OBD parameters to be requested
-float engine_rpm = 0;
-float engine_temp = 0;
-float vehicle_speed = 0;
-float fuel_level = 0;
-float th_pos = 0;
-float odometer = 0;
-float eth_percentage = 0;
-float pids[7];
+int engine_rpm = 0;
+int engine_temp = 0;
+int vehicle_speed = 0;
+int fuel_level = 0;
+int th_pos = 0;
+int odometer = 0;
+int eth_percentage = 0;
+int pids[7];
 
 //System clock
 uint32_t g_ui32SysClock;
 
 STATE currentState = CONFIG;
 
-//Datetime string
-char* datetime_str;
+//Final String
+char pids_str[50];
 
-//GPS Strings
-char* GPS_OutputStr = " ";
-char* location_str;
+ //GPS Strings
+char GPS_OutputStr[100];
+char location_str [50];
+char* outputStr;
+              
 
 int counter = 0;
 
@@ -81,7 +83,7 @@ void main(void) {
           {
             case CONFIG:  
            
-              //Define system clock as 120MHz
+              //Define system clock as 16MHz
               g_ui32SysClock = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
                                               SYSCTL_OSC_MAIN |
                                              SYSCTL_USE_PLL |
@@ -96,16 +98,15 @@ void main(void) {
             
               //Configure RGB Led
               setupPWM_LEDS(g_ui32SysClock);
-
+              
+              //Configure timer
+              setupTimer();
               //Define as BLue LED
               Color c = BLUE;
               
-               //Blink Blue LED for 3 times
-               blinkLED(c,0.5,2);
-             
-              //Configure timer
-              setupTimer();
-             
+               //Blink Blue LED for 2 times
+              blinkLED(c,1,2);
+               
               //Configure GPS Module Peripheral with 9600 bps baud rate (UART comm)
               GPS_setup_UART(g_ui32SysClock,9600);   
          
@@ -119,9 +120,12 @@ void main(void) {
               initCANMessages();
               
               //Init Flash Memory Queue
-              Queue *Segments = (Queue*) malloc(sizeof(Queue));
+              Queue *Segments = (Queue*) malloc(sizeof(Queue));              
               initQueue(Segments);
+              eraseFlash();
              
+               c = GREEN;
+               
               //Blink Green LED
               blinkLED(c,1,1);
              
@@ -132,8 +136,8 @@ void main(void) {
               //Define as BLue LED
                c = BLUE;
               
-              //Blink Blue LED for 3 times to indicate we are entering this state
-              blinkLED(c,0.5,2);
+              //Blink Blue LED for 2 times to indicate we are entering this state
+              blinkLED(c,1,2);
               
               //Reset internet error counter
                contador_erro_internet = 0;
@@ -213,7 +217,10 @@ void main(void) {
               
               //Blink Blue LED for 3 times
                 blinkLED(c,0.5,2);    
-                datetime_str = RTC_now();
+                
+              //Datetime string
+              char* datetime_str = (char*) malloc(50*sizeof(char));
+              datetime_str = RTC_now();
               
               if (strcmp(datetime_str,"Error") == 0)
               {
@@ -236,25 +243,75 @@ void main(void) {
        
               break;
           case WAITING_GPS:
-            GPS_OutputStr = " ";
             
             do{
-              GPS_OutputStr = GPS_Read_UART();
+              outputStr = GPS_Read_UART();
               contador_erro_gps++;
-            }while (strcmp(GPS_OutputStr,"GPS not available") == 0);
+              if (contador_erro_gps >= 5)
+              {
+                break;
+              }
+            }while (strcmp(outputStr,"GPS not available") == 0);
+            
+            strncpy(GPS_OutputStr,outputStr,strlen(outputStr));
             
             if (contador_erro_gps < 5)
             {
               c = GREEN;
               blinkLED(c,1,1);   //Blink Green LED
-              location_str = GPS_get_info(GPS_OutputStr);
+              outputStr = GPS_get_info(GPS_OutputStr);
+              strncpy(location_str,outputStr,strlen(outputStr));
             }
             else
             {
               c = RED;
               blinkLED(c,1,1);   //Blink Red LED
-              location_str = " ";
+              strncpy(location_str," ", 1);
             }
+            
+            int length = snprintf( NULL, 0, "%d", engine_rpm );
+            char* rpm_str = (char*) malloc(length+1);
+            sprintf(rpm_str, "%d", engine_rpm);
+
+            length = snprintf( NULL, 0, "%d", vehicle_speed );
+            char* veh_str = (char*) malloc(length+1);
+            sprintf(veh_str, "%d", vehicle_speed);
+
+            length = snprintf( NULL, 0, "%d", fuel_level );
+            char* fuel_str = (char*) malloc(length+1);
+            sprintf(fuel_str, "%d", fuel_level);
+            
+            length = snprintf( NULL, 0, "%d", th_pos );
+            char* th_str = (char*) malloc(length+1);
+            sprintf(th_str, "%d", th_pos);
+            
+            length = snprintf( NULL, 0, "%d", odometer );
+            char* odometer_str = (char*) malloc(length+1);
+            sprintf(odometer_str, "%d", odometer);
+            
+            length = snprintf( NULL, 0, "%d", eth_percentage);
+            char* eth_str = (char*) malloc(length+1);
+            sprintf(eth_str, "%d", eth_percentage);
+            
+            length = snprintf( NULL, 0, "%d", engine_temp);
+            char* temp_str = (char*) malloc(length+1);
+            sprintf(temp_str, "%d", engine_temp);
+            
+            strncat(pids_str, rpm_str, strlen(rpm_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, veh_str, strlen(veh_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, fuel_str, strlen(fuel_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, odometer_str, strlen(odometer_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, eth_str, strlen(eth_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, temp_str, strlen(temp_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, GPS_OutputStr, strlen(GPS_OutputStr));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, datetime_str, strlen(datetime_str));
             
             contador_erro_gps = 0;
             currentState = STORING;
@@ -263,53 +320,7 @@ void main(void) {
           case STORING:
               //Blink yellow LED
               c = YELLOW;
-              blinkLED(c,0.5,2);
-              
-              char* pids_str;
-              
-              char rpm_str[10];
-              sprintf(rpm_str, "%f", engine_rpm);
-              strncat(pids_str, rpm_str, strlen(rpm_str));
-           
-              strncat(pids_str, "*", 1);
-              
-              char temp_str[10]; 
-              sprintf(temp_str, "%f", engine_temp);
-              strncat(pids_str, temp_str, strlen(temp_str));
-              
-              strncat(pids_str, "*", 1);
-              
-              char veh_str[10]; 
-              sprintf(veh_str, "%f", vehicle_speed);
-              strncat(pids_str, veh_str, strlen(veh_str));
-              
-              strncat(pids_str, "*", 1);
-              
-              char fuel_str[10]; 
-              sprintf(fuel_str, "%f", fuel_level);
-              strncat(pids_str, fuel_str, strlen(fuel_str));
-              
-              strncat(pids_str, "*", 1);
-              
-              char odometer_str[10]; 
-              sprintf(odometer_str, "%f", odometer);
-              strncat(pids_str, odometer_str, strlen(odometer_str));
-              
-              strncat(pids_str, "*", 1);
-              
-              char eth_str[10]; 
-              sprintf(eth_str, "%f", eth_percentage);
-              strncat(pids_str, eth_str, strlen(eth_str));
-              
-              strncat(pids_str, "*", 1);
- 
-              strncat(pids_str, GPS_OutputStr, strlen(GPS_OutputStr));
-              
-              strncat(pids_str, "*", 1);
-              
-              strncat(pids_str, datetime_str, strlen(datetime_str));
-              
-              strncat(pids_str, "\n", 1);
+              blinkLED(c,1,2);
               
               bool stored = storeStringInFlash(pids_str,Segments);
               
@@ -356,18 +367,22 @@ void main(void) {
                 
                 delay_s(2);
                 
-                char* result = UARTRead(UART7_BASE,confirmation);
+                char* result;
                 
-                if (strcmp(result," ") == 0)
-                {
-                  contador_erro_internet++;
+                do{
+                    result = UARTRead(UART7_BASE,confirmation);
+                    contador_erro_internet++;
+                    if (contador_erro_internet > 3)
+                    {
+                      break;
+                    }
+                  }while (strcmp(result," ") == 0);
                   
-                  if (contador_erro_internet > (Segments->size - 1))
+                  if (contador_erro_internet > 3)
                   {
                     break;
                   }
-                }
-                
+                  
                 while(curr != NULL) 
                 {
                   curr = curr->next;
@@ -376,7 +391,7 @@ void main(void) {
                 k++;
               }
               
-              if (contador_erro_internet > (Segments->size - 1))
+              if (contador_erro_internet > 3)
               {
                  currentState = WAITING_PID;
               }

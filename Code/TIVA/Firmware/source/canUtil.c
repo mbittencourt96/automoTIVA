@@ -119,7 +119,7 @@ float readCANmessage()
     secondByte = msgDataRx[4];
       
     float value = convertOBDData(msgDataRx[3],msgDataRx[4],msgDataRx[2]);
-    return value;
+    return (int)value;
 
   }
   else 
