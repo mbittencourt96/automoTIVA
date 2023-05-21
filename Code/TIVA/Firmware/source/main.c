@@ -90,7 +90,7 @@ void main(void) {
                                              SYSCTL_CFG_VCO_240), 16000000);
               
               //Configure UART (terminal)
-              setupUART0(g_ui32SysClock,9600);
+             /* setupUART0(g_ui32SysClock,9600);
               
               setupUART7(g_ui32SysClock,9600);
               
@@ -105,13 +105,13 @@ void main(void) {
               Color c = BLUE;
               
                //Blink Blue LED for 2 times
-              blinkLED(c,1,2);
+              blinkLED(c,1,2);*/
                
               //Configure GPS Module Peripheral with 9600 bps baud rate (UART comm)
               GPS_setup_UART(g_ui32SysClock,9600);   
          
               //Configure RTC Module Peripheral (I2C Comm)
-              RTC_begin_I2C(g_ui32SysClock);
+              /*RTC_begin_I2C(g_ui32SysClock);
               RTC_adjust_time(23,5,7,14,17,30,0);                              //Change here according to current time
               
               //Configure CAN Peripheral (CAN Controller)
@@ -129,12 +129,14 @@ void main(void) {
               //Blink Green LED
               blinkLED(c,1,1);
              
-              currentState = WAITING_PID;
+              currentState = WAITING_PID;*/
+              
+              currentState = WAITING_GPS;
 
               break;
           case WAITING_PID:
               //Define as BLue LED
-               c = BLUE;
+               /*c = BLUE;
               
               //Blink Blue LED for 2 times to indicate we are entering this state
               blinkLED(c,1,2);
@@ -241,8 +243,10 @@ void main(void) {
                 currentState = WAITING_GPS;
               }
        
-              break;
+              break;*/
           case WAITING_GPS:
+            
+            contador_erro_gps = 0;
             
             do{
               outputStr = GPS_Read_UART();
@@ -251,25 +255,25 @@ void main(void) {
               {
                 break;
               }
-            }while (strcmp(outputStr,"GPS not available") == 0);
+            }while ((strstr(outputStr,"$GPGGA") == NULL && strstr(outputStr,"$GNGGA") == NULL) || strlen(outputStr) < 58);
             
             strncpy(GPS_OutputStr,outputStr,strlen(outputStr));
             
             if (contador_erro_gps < 5)
             {
-              c = GREEN;
-              blinkLED(c,1,1);   //Blink Green LED
-              outputStr = GPS_get_info(GPS_OutputStr);
+              //c = GREEN;
+              //blinkLED(c,1,1);   //Blink Green LED
+              outputStr = GPS_get_info(GPS_OutputStr);           
               strncpy(location_str,outputStr,strlen(outputStr));
             }
             else
             {
-              c = RED;
-              blinkLED(c,1,1);   //Blink Red LED
+             // c = RED;
+              //blinkLED(c,1,1);   //Blink Red LED
               strncpy(location_str," ", 1);
             }
             
-            int length = snprintf( NULL, 0, "%d", engine_rpm );
+            /*int length = snprintf( NULL, 0, "%d", engine_rpm );
             char* rpm_str = (char*) malloc(length+1);
             sprintf(rpm_str, "%d", engine_rpm);
 
@@ -315,11 +319,11 @@ void main(void) {
             
             contador_erro_gps = 0;
             currentState = STORING;
-            
+            */
             break;
           case STORING:
               //Blink yellow LED
-              c = YELLOW;
+             /* c = YELLOW;
               blinkLED(c,1,2);
               
               bool stored = storeStringInFlash(pids_str,Segments);
@@ -399,14 +403,14 @@ void main(void) {
               {
                   currentState = SUCCESS;
               }
-              
+              */
               break;
           case SUCCESS:
-            c = GREEN;
+           /* c = GREEN;
             blinkLED(c,1,3);
             eraseFlash();
             delay_s(10);   
-            currentState = WAITING_PID;
+            currentState = WAITING_PID;*/
             break;
           default: 
               break; 
