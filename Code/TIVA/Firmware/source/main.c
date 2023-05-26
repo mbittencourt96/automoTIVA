@@ -70,6 +70,9 @@ char pids_str[50];
 char GPS_OutputStr[100];
 char location_str [50];
 char* outputStr;
+
+//Date string
+char* datetime_str;
               
 
 int counter = 0;
@@ -111,9 +114,9 @@ void main(void) {
               GPS_setup_UART(g_ui32SysClock,9600);   
          
               //Configure RTC Module Peripheral (I2C Comm)
-              /*RTC_begin_I2C(g_ui32SysClock);
-              RTC_adjust_time(23,5,7,14,17,30,0);                              //Change here according to current time
-              
+              RTC_begin_I2C(g_ui32SysClock);
+              RTC_adjust_time(23,5,5,26,15,0,0);                              //Change here according to current time
+              /*
               //Configure CAN Peripheral (CAN Controller)
               configureCAN(g_ui32SysClock);
               //Initialize CAN Bus to wait for messages
@@ -131,7 +134,7 @@ void main(void) {
              
               currentState = WAITING_PID;*/
               
-              currentState = WAITING_GPS;
+              currentState = WAITING_DATE;
 
               break;
           case WAITING_PID:
@@ -212,23 +215,22 @@ void main(void) {
                 blinkLED(c,1,1);
                 currentState = WAITING_DATE;
               }      
-              break;
+              break;*/
           case WAITING_DATE:
               //Define as BLue LED
-                c = BLUE;
+               // c = BLUE;
               
               //Blink Blue LED for 3 times
-                blinkLED(c,0.5,2);    
-                
+                //blinkLED(c,0.5,2);    
               //Datetime string
-              char* datetime_str = (char*) malloc(50*sizeof(char));
-              datetime_str = RTC_now();
+             datetime_str = (char*) malloc(50*sizeof(char));
+             datetime_str = RTC_now();
               
               if (strcmp(datetime_str,"Error") == 0)
               {
                 currentState = WAITING_DATE;
-                c = RED;
-                blinkLED(c,1,1);
+               // c = RED;
+               // blinkLED(c,1,1);
                 contador_erro_rtc++;
                 
                 if (contador_erro_rtc > 5)
@@ -238,12 +240,12 @@ void main(void) {
               }
               else
               {
-                c = GREEN;
-                blinkLED(c,1,1);   //Blink Green LED
+               // c = GREEN;
+               // blinkLED(c,1,1);   //Blink Green LED
                 currentState = WAITING_GPS;
               }
        
-              break;*/
+              break;
           case WAITING_GPS:
             
             contador_erro_gps = 0;

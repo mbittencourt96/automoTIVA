@@ -178,8 +178,6 @@ char* GPS_get_info(char *rawString)
   
   int comp1;
   int comp2;
-  int comp3;
-  int comp4;
   
   int i = 0;
   
@@ -200,8 +198,6 @@ char* GPS_get_info(char *rawString)
   
   comp1 = strcmp(header,"$GPGGA");
   comp2 = strcmp(header,"$GNGGA"); 
-  comp3 = strcmp(header,"$GPRMC");
-  comp4 = strcmp(header,"$GNRMC"); 
   
   if (comp1 == 0 || comp2 == 0)
   {
@@ -272,107 +268,15 @@ char* GPS_get_info(char *rawString)
     }
   }
  
- /*else if ( comp3 == 0 || comp4 == 0)
-  {
-    int j = 0;
-    
-    while(caract != '.')
-      {
-        caract = rawString[i];
-        time[j] = caract;
-        i++;
-        j++;
-      }
-    
-    time[j] = '\0';
-    
-    j = 0;
-    caract = ' ';
-     
-    while(rawString[i] != ',')
-    {
-      i++;
-    }
-    
-    i = i + 3;
-    
-    while(caract != ',')
-      {
-        caract = rawString[i];
-        latitude[j+1] = caract;
-        i++;
-        j++;
-      }
-  
-      latitude[j] = '\0';
-     
-    if (rawString[i] == 'S')    //South
-    {
-      latitude[0] = '-';
-    }
-    else      //North
-    {
-      latitude[0] = '+';
-    }
-    
-    i = i + 2;
-    j = 0;
-    caract = ' ';
-    
-    while(caract != ',')
-    {
-      caract = rawString[i];
-      longitude[j+1] = caract;
-      i++;
-      j++;
-    }
-    
-    longitude[j] = '\0';
-    
-    if (rawString[i] == 'W')    //West
-    {
-      longitude[0] = '-';
-    }
-    else      //East
-    {
-      longitude[0] = '+';
-    }
-    
-    i++;
-    i++;
-    
-    while(rawString[i] != ',')
-    {
-      i++;
-    }
-    
-    i++;
-     
-    while(rawString[i] != ',')
-    {
-      i++;
-    }
-    
-    i++;
-    j = 0;
-     while(caract != ',')
-    {
-      caract = rawString[i];
-      date[j] = caract;
-      i++;
-      j++;
-    } 
-  
-    date[j] = '\0';
-
-  }*/
   else
   {
     return " ";
   }
   
+  lat = (char*) malloc(12*sizeof(char));
+  lng = (char*) malloc(12*sizeof(char));
+  
   lat =  GPS_parse_coordinate(latitude);
-  lng =  GPS_parse_coordinate(longitude);
    
   char slash = '/';
   char dots = ':';
@@ -394,16 +298,19 @@ char* GPS_get_info(char *rawString)
   strncat(outputString, &lat[5], 1);
   strncat(outputString, &lat[6], 1);
   strncat(outputString, &lat[7], 1);
+  strncat(outputString, &lat[8], 1);
   strncat(outputString, "*", 1);
+  
+  lng =  GPS_parse_coordinate(longitude);
   
   strncat(outputString, &lng[0],1);
   strncat(outputString, &lng[1],1);
   strncat(outputString, &lng[2],1);
   strncat(outputString,&dot,1);
-  strncat(outputString, &lng[3],1);
   strncat(outputString, &lng[4],1);
   strncat(outputString, &lng[5],1);
   strncat(outputString, &lng[6],1);
+  strncat(outputString, &lng[7],1);
  
   char* strOut = (char*) outputString;
   return strOut;    

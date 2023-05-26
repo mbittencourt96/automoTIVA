@@ -243,6 +243,7 @@ extern void I2CIntHandler_FIFO(void)
               {
                       g_ui8MasterCurrState = I2C_OP_STOP;
                       I2CMasterDataPut(I2C5_BASE,g_ui8MasterTxData[0]);
+                      I2CMasterControl(I2C5_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
               }
               else
               {
@@ -388,7 +389,14 @@ void RTC_adjust_time(uint16_t year, uint8_t month, uint8_t dow, uint8_t day, uin
 {
   RTC_write_I2C(bin2bcd(second),0x00);
   RTC_write_I2C(bin2bcd(minute),0x01);
+  
+  
   RTC_write_I2C(bin2bcd(hour),0x02);
+  
+  RTC_read_I2C(0x02);
+ //Get value from registers
+  int hours = (int) bcd2bin(g_ui8MasterRxData[0]);
+  
   RTC_write_I2C(bin2bcd(dow),0x03); 
   RTC_write_I2C(bin2bcd(day),0x04); 
   RTC_write_I2C(bin2bcd(month),0x05); 
@@ -465,22 +473,45 @@ char* RTC_now(void)
   
   char datetime [20];
   
-  strncat(datetime, day_str, 2);
+  2023-05-24T19:39:37.448Z  
   
   char bar = '/';
   char dots = ':';
   char space = ' ';
-  
+  char line = '-';
+  char dot = '.';
+ 
   //Build the string
-  strncat(datetime, &bar, 1);
-  strncat(datetime, month_str, 2);
-  strncat(datetime, &bar, 1);
   strncat(datetime, year_str, 4);
-  strncat(datetime, &space, 1);
+  strncat(datetime, &line, 1);
+  if (strlen(month_str) == 1)
+  {
+    strncat(datetime, '0', 1);
+  }
+  strncat(datetime, month_str, 2);
+  strncat(datetime, &line, 1);
+  if (strlen(day_str) == 1)
+  {
+    strncat(datetime, '0', 1);
+  }
+  strncat(datetime, day_str, 2);
+  strncat(datetime, 'T', 1);
+  if (strlen(hours_str) == 1)
+  {
+    strncat(datetime, '0', 1);
+  }
   strncat(datetime, hours_str, 2);
   strncat(datetime, &dots, 1);
+  if (strlen(minutes_str) == 1)
+  {
+    strncat(datetime, '0', 1);
+  }
   strncat(datetime, minutes_str, 2);
   strncat(datetime, &dots, 1);
+   if (strlen(seconds_str) == 1)
+  {
+    strncat(datetime, '0', 1);
+  }
   strncat(datetime, seconds_str, 2);
   
   return datetime;
