@@ -92,12 +92,8 @@ void main(void) {
                                              SYSCTL_USE_PLL |
                                              SYSCTL_CFG_VCO_240), 16000000);
               
-              //Configure UART (terminal)
-             /* setupUART0(g_ui32SysClock,9600);
-              
+              //Configure UART
               setupUART7(g_ui32SysClock,9600);
-              
-              UARTSend(UART0_BASE,"Enter configuration state...",strlen("Enter configuration state..."));
             
               //Configure RGB Led
               setupPWM_LEDS(g_ui32SysClock);
@@ -108,7 +104,7 @@ void main(void) {
               Color c = BLUE;
               
                //Blink Blue LED for 2 times
-              blinkLED(c,1,2);*/
+              blinkLED(c,1,2);
                
               //Configure GPS Module Peripheral with 9600 bps baud rate (UART comm)
               GPS_setup_UART(g_ui32SysClock,9600);   
@@ -116,7 +112,7 @@ void main(void) {
               //Configure RTC Module Peripheral (I2C Comm)
               RTC_begin_I2C(g_ui32SysClock);
               RTC_adjust_time(23,5,5,26,15,0,0);                              //Change here according to current time
-              /*
+              
               //Configure CAN Peripheral (CAN Controller)
               configureCAN(g_ui32SysClock);
               //Initialize CAN Bus to wait for messages
@@ -127,70 +123,61 @@ void main(void) {
               initQueue(Segments);
               eraseFlash();
              
-               c = GREEN;
+              c = GREEN;
                
               //Blink Green LED
               blinkLED(c,1,1);
              
-              currentState = WAITING_PID;*/
-              
-              currentState = WAITING_DATE;
+              currentState = WAITING_PID;
 
               break;
           case WAITING_PID:
               //Define as BLue LED
-               /*c = BLUE;
-              
+               c = BLUE;
+      
               //Blink Blue LED for 2 times to indicate we are entering this state
               blinkLED(c,1,2);
               
               //Reset internet error counter
-               contador_erro_internet = 0;
+              contador_erro_internet = 0;
               
               //Reset RTC error counter
-               contador_erro_rtc = 0;
+              contador_erro_rtc = 0;
 
               //Request Engine RPM PID
               requestPID(ENGINE_RPM);
               delay_s(1);
               engine_rpm = readCANmessage();  //Read message that was received
-              delay_s(1);
               
               //Request Engine Temperature PID
               requestPID(ENGINE_TEMPERATURE);
               delay_s(1);
               engine_temp = readCANmessage();  //Read message that was received
-              delay_s(1);
               
               //Request Vehicle Speed PID
               requestPID(VEHICLE_SPEED);
               delay_s(1);
               vehicle_speed = readCANmessage();  //Read message that was received
-              delay_s(1);
               
               //Request Throttle position PID
               requestPID(THROTTLE_POS);
               delay_s(1);
               th_pos = readCANmessage();  //Read message that was received
-              delay_s(1);
-              
+
               //Request Fuel Level PID
               requestPID(FUEL_LEVEL);
               delay_s(1);
               fuel_level = readCANmessage();  //Read message that was received
-              delay_s(1);
               
               //Request Fuel Level PID
               requestPID(ODOMETER);
               delay_s(1);
               odometer = readCANmessage();  //Read message that was received
-              delay_s(1);
-              
+
               //Request Ethanol Percentage PID
               requestPID(ETH_PERCENTAGE);
               delay_s(1);
               eth_percentage = readCANmessage();  //Read message that was received
-              delay_s(1);
               
               pids[0] = engine_rpm;
               pids[1] = engine_temp;
@@ -203,7 +190,6 @@ void main(void) {
               if (engine_rpm == -1 && engine_temp == -1 &&  vehicle_speed == -1 &&
                   th_pos == -1 && fuel_level == -1 && odometer == -1)  //None of the PIDs was received
               {
-                UARTSend(UART0_BASE,"PIDs not received, trying again...",strlen("PIDs not received, trying again..."));
                 c = RED;
                 blinkLED(c,1,1);
                 currentState = WAITING_PID;
@@ -215,22 +201,22 @@ void main(void) {
                 blinkLED(c,1,1);
                 currentState = WAITING_DATE;
               }      
-              break;*/
+              break;
           case WAITING_DATE:
-              //Define as BLue LED
-               // c = BLUE;
+             //Define as BLue LED
+             c = BLUE;
               
-              //Blink Blue LED for 3 times
-                //blinkLED(c,0.5,2);    
-              //Datetime string
+             //Blink Blue LED for 2 times
+             blinkLED(c,1,2);    
+             //Datetime string
              datetime_str = (char*) malloc(50*sizeof(char));
              datetime_str = RTC_now();
               
               if (strcmp(datetime_str,"Error") == 0)
               {
                 currentState = WAITING_DATE;
-               // c = RED;
-               // blinkLED(c,1,1);
+                c = RED;
+                blinkLED(c,1,1);
                 contador_erro_rtc++;
                 
                 if (contador_erro_rtc > 5)
@@ -240,16 +226,14 @@ void main(void) {
               }
               else
               {
-               // c = GREEN;
-               // blinkLED(c,1,1);   //Blink Green LED
+                c = GREEN;
+                blinkLED(c,1,1);   //Blink Green LED
                 currentState = WAITING_GPS;
               }
        
               break;
           case WAITING_GPS:
-            
-            contador_erro_gps = 0;
-            
+           
             do{
               outputStr = GPS_Read_UART();
               contador_erro_gps++;
@@ -263,19 +247,19 @@ void main(void) {
             
             if (contador_erro_gps < 5)
             {
-              //c = GREEN;
-              //blinkLED(c,1,1);   //Blink Green LED
+              c = GREEN;
+              blinkLED(c,1,1);   //Blink Green LED
               outputStr = GPS_get_info(GPS_OutputStr);           
               strncpy(location_str,outputStr,strlen(outputStr));
             }
             else
             {
-             // c = RED;
-              //blinkLED(c,1,1);   //Blink Red LED
+              c = RED;
+              blinkLED(c,1,1);   //Blink Red LED
               strncpy(location_str," ", 1);
             }
             
-            /*int length = snprintf( NULL, 0, "%d", engine_rpm );
+            int length = snprintf( NULL, 0, "%d", engine_rpm );
             char* rpm_str = (char*) malloc(length+1);
             sprintf(rpm_str, "%d", engine_rpm);
 
@@ -319,13 +303,12 @@ void main(void) {
             strncat(pids_str, "*", 1);
             strncat(pids_str, datetime_str, strlen(datetime_str));
             
-            contador_erro_gps = 0;
             currentState = STORING;
-            */
             break;
           case STORING:
+              contador_erro_gps = 0;
               //Blink yellow LED
-             /* c = YELLOW;
+              c = YELLOW;
               blinkLED(c,1,2);
               
               bool stored = storeStringInFlash(pids_str,Segments);
@@ -344,7 +327,6 @@ void main(void) {
               
               if (contador_erro_mem > 3) 
               {
-                contador_erro_mem = 0;
                 currentState = SENDING;
                 c = RED;
                 blinkLED(c,1,1);
@@ -352,9 +334,10 @@ void main(void) {
              
               break;
           case SENDING:
+              contador_erro_mem = 0;
               c = YELLOW;
               
-              blinkLED(c,2,2);
+              blinkLED(c,1,2);
               
               int k = 0;
               
@@ -378,13 +361,13 @@ void main(void) {
                 do{
                     result = UARTRead(UART7_BASE,confirmation);
                     contador_erro_internet++;
-                    if (contador_erro_internet > 3)
+                    if (contador_erro_internet > 9)
                     {
                       break;
                     }
                   }while (strcmp(result," ") == 0);
                   
-                  if (contador_erro_internet > 3)
+                  if (contador_erro_internet > 9)
                   {
                     break;
                   }
@@ -397,22 +380,24 @@ void main(void) {
                 k++;
               }
               
-              if (contador_erro_internet > 3)
+              if (contador_erro_internet > 9)
               {
                  currentState = WAITING_PID;
+                 c = RED;
+                 blinkLED(c,1,1);
               }
               else
               {
                   currentState = SUCCESS;
               }
-              */
+       
               break;
           case SUCCESS:
-           /* c = GREEN;
-            blinkLED(c,1,3);
+            c = GREEN;
+            blinkLED(c,1,2);
             eraseFlash();
             delay_s(10);   
-            currentState = WAITING_PID;*/
+            currentState = WAITING_PID;
             break;
           default: 
               break; 

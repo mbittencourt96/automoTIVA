@@ -214,7 +214,6 @@ void loop()
                 currentTime = millis();
                 unsigned long elapsedTime = (currentTime - lastTime) / 1000;  //get the elapsed time in seconds
                 unsigned long deltaOdometer = (veh_speed/3.6) * elapsedTime;
-                deltaOdometer = deltaOdometer / 1000;
                 odometer += deltaOdometer; 
                 byte odometerSensor[8] = {4, 65, ODOMETER, uintMSB(odometer), uintLSB(odometer),0,0,0};
                 CAN1.sendMsgBuf(responseId, 0, 8, odometerSensor);

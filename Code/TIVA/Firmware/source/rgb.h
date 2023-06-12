@@ -14,6 +14,6 @@ typedef enum {
 void setupPWM_LEDS(uint32_t g_ui32SysClock);
 void LEDturnON(Color c);
 void LEDturnOFF(void);
-void blinkLED(Color c, float seconds, int turns);
+void blinkLED(Color c, int seconds, int turns);
 
 #endif

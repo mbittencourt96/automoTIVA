@@ -279,6 +279,16 @@ extern void I2CIntHandler_FIFO(void)
                 g_ui8MasterCurrState = I2C_OP_STOP;
                 g_ui8MasterRxData[0] = I2CFIFODataGet(I2C5_BASE);
               }
+              else if (ui32I2CMasterInterruptStatus & I2C_MASTER_INT_DATA)
+              {
+                g_ui8MasterCurrState = I2C_OP_STOP;
+                g_ui8MasterRxData[0] = I2CMasterDataGet(I2C5_BASE);
+              }
+               else if (ui32I2CMasterInterruptStatus & (I2C_MASTER_INT_DATA | I2C_MASTER_INT_STOP))
+              {
+                g_ui8MasterCurrState = I2C_OP_STOP;
+                g_ui8MasterRxData[0] = I2CMasterDataGet(I2C5_BASE);
+              }
               else
               {
                       g_ui8MasterCurrState = I2C_ERR_STATE;
@@ -362,7 +372,7 @@ void RTC_read_I2C(uint8_t reg)
   //
   g_ui8MasterCurrState = I2C_OP_IDLE;
   IntTrigger(INT_I2C5);
-  while(g_ui8MasterCurrState != I2C_OP_STOP);   
+    while(g_ui8MasterCurrState != I2C_OP_STOP);   
 }
 
 //Convert binary value to BCD
@@ -473,8 +483,6 @@ char* RTC_now(void)
   
   char datetime [20];
   
-  2023-05-24T19:39:37.448Z  
-  
   char bar = '/';
   char dots = ':';
   char space = ' ';
@@ -486,31 +494,31 @@ char* RTC_now(void)
   strncat(datetime, &line, 1);
   if (strlen(month_str) == 1)
   {
-    strncat(datetime, '0', 1);
+    strncat(datetime, "0", 1);
   }
   strncat(datetime, month_str, 2);
   strncat(datetime, &line, 1);
   if (strlen(day_str) == 1)
   {
-    strncat(datetime, '0', 1);
+    strncat(datetime, "0", 1);
   }
   strncat(datetime, day_str, 2);
-  strncat(datetime, 'T', 1);
+  strncat(datetime, "T", 1);
   if (strlen(hours_str) == 1)
   {
-    strncat(datetime, '0', 1);
+    strncat(datetime, "0", 1);
   }
   strncat(datetime, hours_str, 2);
   strncat(datetime, &dots, 1);
   if (strlen(minutes_str) == 1)
   {
-    strncat(datetime, '0', 1);
+    strncat(datetime, "0", 1);
   }
   strncat(datetime, minutes_str, 2);
   strncat(datetime, &dots, 1);
    if (strlen(seconds_str) == 1)
   {
-    strncat(datetime, '0', 1);
+    strncat(datetime, "0", 1);
   }
   strncat(datetime, seconds_str, 2);
   

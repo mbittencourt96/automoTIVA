@@ -66,12 +66,12 @@ void setupPWM_LEDS(uint32_t g_ui32SysClock)
    
    SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0); // Use PWM module 0
 
-   PWMGenConfigure(PWM0_BASE, PWM_GEN_2, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+   PWMGenConfigure(PWM0_BASE, PWM_GEN_2, PWM_GEN_MODE_DOWN);
    PWMGenPeriodSet(PWM0_BASE, PWM_GEN_2, PWM_WORD); // Set PWM period
    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, 0);   // Set Initial Duty cycle 
    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, 0);   // Set Initial Duty cycle 
    
-   PWMGenConfigure(PWM0_BASE, PWM_GEN_3, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+   PWMGenConfigure(PWM0_BASE, PWM_GEN_3, PWM_GEN_MODE_DOWN);
    PWMGenPeriodSet(PWM0_BASE, PWM_GEN_3, PWM_WORD); // Set PWM period
    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, 0);   // Set Initial Duty cycle 
    
@@ -88,48 +88,50 @@ void LEDturnON(Color c)
   switch(c)
   {
   case 0:   //Red
+    PWMGenEnable(PWM0_BASE, PWM_GEN_2);
+    PWMGenEnable(PWM0_BASE, PWM_GEN_3);
+    
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 1); // 100% duty cycle for PWM4 (red)
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0); // 0% duty cycle for PWM5 (green)
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 0% duty cycle for PWM7 (blue)
-    
-    PWMGenEnable(PWM0_BASE, PWM_GEN_2);
-    PWMGenEnable(PWM0_BASE, PWM_GEN_3);
     
     PWMOutputState(PWM0_BASE, PWM_OUT_4_BIT, true); // Enable PWM output channels
    
     break;
   case 1:  //Yellow
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 100% duty cycle for PWM4 (red)
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 50% duty cycle for PWM5 (green)
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 0% duty cycle for PWM7 (blue)
     
     PWMGenEnable(PWM0_BASE, PWM_GEN_2);
     PWMGenEnable(PWM0_BASE, PWM_GEN_3);
     
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 50% duty cycle for PWM4 (red)
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 50% duty cycle for PWM5 (green)
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 0% duty cycle for PWM7 (blue)
+    
     PWMOutputState(PWM0_BASE, PWM_OUT_4_BIT | PWM_OUT_5_BIT, true); // Enable PWM output channels
-       
+    
     break;
   case 2:  //Blue
+    
+    PWMGenEnable(PWM0_BASE, PWM_GEN_2);
+    PWMGenEnable(PWM0_BASE, PWM_GEN_3);
+    
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0); // 0% duty cycle for PWM4 (red)
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0); // 0% duty cycle for PWM5 (green)
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 1); // 100% duty cycle for PWM7 (blue)
     
-    PWMGenEnable(PWM0_BASE, PWM_GEN_2);
-    PWMGenEnable(PWM0_BASE, PWM_GEN_3);
-    
-    PWMOutputState(PWM0_BASE,PWM_OUT_7_BIT, true); // Enable PWM output channels
+    PWMOutputState(PWM0_BASE, PWM_OUT_7_BIT, true); // Enable PWM output channels
     
     break;
     
   case 3:  //Green
-  PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0); // 0% duty cycle for PWM4 (red)
-  PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 1); // 0% duty cycle for PWM5 (green)
-  PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 100% duty cycle for PWM7 (blue)
-  
+    
   PWMGenEnable(PWM0_BASE, PWM_GEN_2);
   
-  PWMOutputState(PWM0_BASE,PWM_OUT_5_BIT, true); // Enable PWM output channels
+  PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0); // 0% duty cycle for PWM4 (red)
+  PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 1); // 100% duty cycle for PWM5 (green)
+  PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 0% duty cycle for PWM7 (blue)
   
+  PWMOutputState(PWM0_BASE, PWM_OUT_5_BIT, true); // Enable PWM output channels
   break;
   default:
     break;
@@ -137,12 +139,12 @@ void LEDturnON(Color c)
 }
 void LEDturnOFF(void)
 { 
-    PWMGenDisable(PWM0_BASE, PWM_GEN_2); // Disable PWM GEN2
-    PWMGenDisable(PWM0_BASE, PWM_GEN_3); // Disable PWM GEN3
+    //PWMGenDisable(PWM0_BASE, PWM_GEN_2); // Disable PWM GEN2
+    //PWMGenDisable(PWM0_BASE, PWM_GEN_3); // Disable PWM GEN3
     PWMOutputState(PWM0_BASE, PWM_OUT_4_BIT | PWM_OUT_5_BIT | PWM_OUT_7_BIT, false); // Disable PWM output channels
 }
 
-void blinkLED(Color c, float seconds, int turns)
+void blinkLED(Color c, int seconds, int turns)
 {
  
   for(int i = 0; i < turns; i++)
