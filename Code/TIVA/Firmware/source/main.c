@@ -90,7 +90,7 @@ void main(void) {
               g_ui32SysClock = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
                                               SYSCTL_OSC_MAIN |
                                              SYSCTL_USE_PLL |
-                                             SYSCTL_CFG_VCO_240), 16000000);
+                                             SYSCTL_CFG_VCO_240), 120000000);
               
               //Configure UART
               setupUART7(g_ui32SysClock,9600);
@@ -149,6 +149,9 @@ void main(void) {
               delay_s(1);
               engine_rpm = readCANmessage();  //Read message that was received
               
+              CANDisable(CAN1_BASE);
+              CANInit(CAN1_BASE);
+              CANEnable(CAN1_BASE);
               //Request Engine Temperature PID
               requestPID(ENGINE_TEMPERATURE);
               delay_s(1);

@@ -32,7 +32,7 @@ void setupTimer(void)
 {
   SysTickIntEnable();
   
-  SysTickPeriodSet(15999);   //Sets the period of SysTick timer
+  SysTickPeriodSet(119999);   //Sets the period of SysTick timer
 }
 
 extern void contadorTempo(void)

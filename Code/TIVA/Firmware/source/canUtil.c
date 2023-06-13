@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
@@ -43,7 +44,7 @@ tCANMsgObject msgTx; // the CAN msg Tx object
 unsigned int msgDataTx; // the message data is four bytes long which we can allocate as an int32
 
 //Pointer to CAN Tx message Object
-unsigned char *msgDataTxPtr = (unsigned char *)&msgDataTx; // make a pointer to msgDataTx so we can access individual bytes
+uint8_t *msgDataTxPtr; // make a pointer to msgDataTx so we can access individual bytes
 
 //Buffer for received data
 unsigned char msgDataRx[8];
@@ -135,13 +136,15 @@ void initCANMessages(void)
     msgRx.ui32MsgIDMask = 0;
     msgRx.ui32Flags = MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_USE_ID_FILTER;
     msgRx.ui32MsgLen = 8; // allow up to 8 bytes
-    //msgRx.pui8MsgData = msgDataRx;
+    msgRx.pui8MsgData = msgDataRx;
     
     //Init var for Tx messages  
     msgDataTx = 0;  
     // Load msg into CAN peripheral message object 2 so it can trigger interrupts on any matched rx messages
     CANMessageSet(CAN1_BASE, 2, &msgRx, MSG_OBJ_TYPE_RX);
     
+    msgDataTxPtr = (uint8_t*) &msgDataTx;
+      
     msgTx.ui32MsgID = 0x7DF;  //Request ID
     msgTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE;
     msgTx.ui32MsgIDMask = 0;
@@ -213,8 +216,8 @@ void configureCAN(uint32_t g_ui32SysClock)
 	CANBitRateSet(CAN1_BASE,g_ui32SysClock, 500000);  //Set 500kbps CAN
         CANIntRegister(CAN1_BASE, CANIntHandler); // use dynamic vector table allocation
         IntMasterEnable();
-	CANIntEnable(CAN1_BASE, CAN_INT_MASTER | CAN_INT_ERROR);
-	IntEnable(INT_CAN1_TM4C129);
+	CANIntEnable(CAN1_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
+	IntEnable(INT_CAN1);
         
         //Enable CAN peripheral
         CANEnable(CAN1_BASE);
