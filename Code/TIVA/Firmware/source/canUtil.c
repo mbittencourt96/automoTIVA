@@ -79,27 +79,27 @@ float convertOBDData(char firstByte, char secondByte, int pid)
 {
   if (pid == ENGINE_TEMPERATURE)
   {
-    float ect = firstByte - 40;
+    float ect = firstByte - 40.0;
     return ect;
   }
   else if (pid == ENGINE_RPM)
   {
-    float rpm = ((256*firstByte)+secondByte)/4;
+    float rpm = ((256.0*firstByte)+secondByte)/4.0;
     return rpm;
   }
   else if (pid == THROTTLE_POS)
   {
-    float tp = (100/255)* (float) firstByte;
+    float tp = (100.0/255.0)* firstByte;
     return tp;
   }
   else if (pid == ETH_PERCENTAGE)
   {
-    float ep = (100/255)* (float) firstByte;
+    float ep = (100.0/255.0)* firstByte;
     return ep;
   }
   else if (pid == FUEL_LEVEL)
   {
-    float fl = (100/255)*firstByte;
+    float fl = (100.0/255.0)*firstByte;
     return fl;
   }
   else if (pid == VEHICLE_SPEED)
@@ -116,11 +116,6 @@ float readCANmessage()
 {  
     msgRx.pui8MsgData = msgDataRx; // set pointer to rx buffer
     CANMessageGet(CAN1_BASE, 2, &msgRx, 0); // read CAN message object 2 from CAN peripheral
-    
-    if(msgRx.ui32Flags & MSG_OBJ_DATA_LOST) { // check msg flags for any lost messages
-              return -1;
-    }
-
     // read in data from rx buffer
     firstByte = msgDataRx[3];
     secondByte = msgDataRx[4];

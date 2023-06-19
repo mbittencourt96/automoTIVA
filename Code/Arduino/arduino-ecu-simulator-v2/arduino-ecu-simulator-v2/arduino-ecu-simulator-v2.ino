@@ -212,8 +212,16 @@ void loop()
             case 49:   //Distance since DTC cleared
             {
                 currentTime = millis();
-                unsigned long elapsedTime = (currentTime - lastTime) / 1000;  //get the elapsed time in seconds
-                unsigned long deltaOdometer = (veh_speed/3.6) * elapsedTime;
+                Serial.print("Current time  = ");
+                Serial.println(currentTime);
+                 Serial.print("Last time  = ");
+                Serial.println(lastTime);
+                unsigned long elapsedTime = (currentTime - lastTime);  //get the elapsed time in seconds
+                Serial.print("Elapsed time  = ");
+                Serial.println(elapsedTime);
+                float deltaOdometer = (veh_speed/3.6) * elapsedTime * 0.001;
+                Serial.print("Delta odometer  = ");
+                Serial.println(deltaOdometer);
                 odometer += deltaOdometer; 
                 byte odometerSensor[8] = {4, 65, ODOMETER, odometer, 0,0,0,0};
                 CAN1.sendMsgBuf(responseId, 0, 8, odometerSensor);

@@ -66,6 +66,9 @@ char GPS_OutputStr[100];
 char location_str [50];
 char* outputStr;
 
+//Final String
+char pids_str [50];
+
 //Date string
 char* datetime_str;
 
@@ -103,7 +106,7 @@ void main(void) {
          
               //Configure RTC Module Peripheral (I2C Comm)
               RTC_begin_I2C(g_ui32SysClock);
-              //RTC_adjust_time(23,6,7,18,18,0,0);                              //Change here according to current time
+              //RTC_adjust_time(23,6,1,19,15,25,0);                              //Change here according to current time
               
               //Configure CAN Peripheral (CAN Controller)
               configureCAN(g_ui32SysClock);
@@ -204,7 +207,7 @@ void main(void) {
             do{
               outputStr = GPS_Read_UART();
               contador_erro_gps++;
-              if (contador_erro_gps >= 5)
+              if (contador_erro_gps >= 15)
               {
                 break;
               }
@@ -212,7 +215,7 @@ void main(void) {
             
             strncpy(GPS_OutputStr,outputStr,strlen(outputStr));
             
-            if (contador_erro_gps < 5)
+            if (contador_erro_gps < 15)
             {
               c = GREEN;
               blinkLED(c,1,1);   //Blink Green LED
@@ -253,9 +256,11 @@ void main(void) {
             length = snprintf( NULL, 0, "%d", engine_temp);
             char* temp_str = (char*) malloc(length+1);
             sprintf(temp_str, "%d", engine_temp);
-            
-             //Final String
-            char pids_str [50];
+           
+            for (int i = 0; i < 50; i++)
+            {
+              pids_str[i] = '\0';
+            }
             
             strncat(pids_str, rpm_str, strlen(rpm_str));
             strncat(pids_str, "*", 1);
@@ -287,7 +292,7 @@ void main(void) {
               
               UARTSend(UART7_BASE,pids_str,strlen(pids_str)); //Send string with information to the ESP8266
               //delay_s(2);
-              while (strcmp(result," ") == 0)
+              while (strstr(result,"OK") == NULL)
               {
                 result = UARTRead(UART5_BASE);
                 contador_erro_internet++;

@@ -488,6 +488,10 @@ char* RTC_now(void)
   char line = '-';
   char dot = '.';
  
+ for (int i = 0; i < 50; i++)
+  {
+    datetime[i] = '\0';
+  }
   //Build the string
   strncat(datetime, year_str, 4);
   strncat(datetime, &line, 1);
