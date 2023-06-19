@@ -1,3 +1,14 @@
+/**************************************************************************/
+/*!
+  uart.c
+  UART related function declarations for the TM4C1294XL Board (TIVA)
+
+  License: GNU General Public License v3.0
+
+  By: Mariana Junghans, from UTFPR Curitiba
+*/
+/**************************************************************************/
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -37,6 +48,24 @@ void setupUART7(uint32_t g_ui32SysClock, int baud)
     UARTEnable(UART7_BASE); 
 }
 
+void setupUART5(uint32_t g_ui32SysClock, int baud)
+{ 
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART5);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+    
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_UART5) && !SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC))
+    {
+    }                                                 //Wait until UART5 and PORT C is ready
+    
+   
+    GPIOPinConfigure(GPIO_PC6_U5RX);
+    GPIOPinConfigure(GPIO_PC7_U5TX);
+    GPIOPinTypeUART(GPIO_PORTC_BASE, GPIO_PIN_6 | GPIO_PIN_7);
+    UARTConfigSetExpClk(UART5_BASE, g_ui32SysClock, baud, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+    
+    UARTEnable(UART5_BASE); 
+}
+
 void setupUART0(uint32_t g_ui32SysClock, int baud)
 { 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
@@ -71,42 +100,37 @@ void UARTSend(uint32_t baseUART,char* pui8Buffer, int count)
     
 }
 
-char* UARTRead(uint32_t baseUART,char* outputUARTString) 
+char* UARTRead(uint32_t baseUART) 
 {
     char caract;
     int i = 0;
+    char outputUARTString[64];
     
-    if (UARTCharsAvail(baseUART))
+    if(UARTCharsAvail(baseUART))
     {
-    do
-     {
-        caract = (unsigned char) UARTCharGet(baseUART);
+      do
+       {
+          caract = (unsigned char) UARTCharGet(baseUART);
+          
+          if (caract != '\r')
+          {
+            outputUARTString[i++] = caract;
+          }
+          
+        }while(UARTCharsAvail(baseUART));
         
-        if (caract != '\r')
-        {
-          outputUARTString[i++] = caract;
-    }
+        outputUARTString[i] = '\0';
+       
+        char* returnString = outputUARTString;
         
-      }while(UARTCharsAvail(baseUART));
-      
-      if (strlen(outputUARTString) < 16)
-      {
-        outputUARTString[i++] = '\r';
-      }
-      
-      outputUARTString[i] = '\0';
-     
-      char* returnString = outputUARTString;
-      
-      free(outputUARTString);
-      
-      return returnString;
+        free(outputUARTString);
+        
+        return returnString;  
     }
-    else
-    {
-      return " ";
-    }
-    
+   else
+   {
+     return " ";
+   }
 }
 
 void UARTReadThenSend(uint32_t UART_to_read, uint32_t UART_to_send) 

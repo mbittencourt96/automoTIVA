@@ -4,7 +4,7 @@
   
   Definition of functions to store and retrieve data of TIVA Flash memory
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */
@@ -41,7 +41,7 @@ int isEmpty(Queue *Segments);
 void enqueue(Queue *Segments, char* data, uint32_t address);
 uint32_t dequeue(Queue *Segments);
 FlashSegment_t* createItem(char* data, uint32_t address);
-void eraseFlash(void);
+Queue* eraseFlash(void);
 char* FlashRead(uint32_t address);
 void initQueue(Queue* Segments);
 bool storeStringInFlash(char *string, Queue* Segments);

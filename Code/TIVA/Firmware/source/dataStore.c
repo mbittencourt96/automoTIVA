@@ -4,7 +4,7 @@
 
   Implementation of functions to store and retrieve data of TIVA Flash memory, using a FIFO
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */
@@ -94,12 +94,17 @@ void initQueue(Queue* Segments)
   Segments->size = 0;
 }
 
-void eraseFlash(void)
+Queue* eraseFlash(void)
 {
   for (int k = 0; k < 10; k ++)
   {   
     FlashErase(FLASH_START_ADDRESS + FLASH_SEG_SIZE*k); //Erase the flash at specific address
   } 
+  
+  Queue *Segments = (Queue*) malloc(sizeof(Queue));              
+  initQueue(Segments);
+  
+  return Segments;
 }
 
 //Function to search for a specific address in the queue

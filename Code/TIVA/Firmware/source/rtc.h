@@ -3,7 +3,7 @@
   RTC.h
   Adaptation of the Arduino Library RTCLib by JeeLab (https://github.com/adafruit/RTClib) for the TM4C1294XL Board and DS3231 RTC module (TIVA)
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */

@@ -1,4 +1,13 @@
-//CAN related function declarations
+/**************************************************************************/
+/*!
+  canUtil.c
+  CAN related function declarations for the TM4C1294XL Board (TIVA)
+
+  License: GNU General Public License v3.0
+
+  By: Mariana Junghans, from UTFPR Curitiba
+*/
+/**************************************************************************/
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -41,10 +50,10 @@ tCANMsgObject msgRx; // the CAN msg Rx object
 tCANMsgObject msgTx; // the CAN msg Tx object
 
 //The bytes of Tx Message
-unsigned int msgDataTx; // the message data is four bytes long which we can allocate as an int32
+uint32_t msgDataTx; // the message data is four bytes long which we can allocate as an int32
 
 //Pointer to CAN Tx message Object
-uint8_t *msgDataTxPtr; // make a pointer to msgDataTx so we can access individual bytes
+uint8_t* msgDataTxPtr = (uint8_t*) &msgDataTx; // make a pointer to msgDataTx so we can access individual bytes
 
 //Buffer for received data
 unsigned char msgDataRx[8];
@@ -58,6 +67,8 @@ void requestPID(int pid)
           msgDataTxPtr[1] = 1;
           msgDataTxPtr[2] = pid;
           msgDataTxPtr[3] = 0;
+          
+          msgTx.pui8MsgData = msgDataTxPtr;
           
           //printf("Sending request for PID  %d\n", pid);
           
@@ -78,12 +89,12 @@ float convertOBDData(char firstByte, char secondByte, int pid)
   }
   else if (pid == THROTTLE_POS)
   {
-    float tp = (100/255)*firstByte;
+    float tp = (100/255)* (float) firstByte;
     return tp;
   }
   else if (pid == ETH_PERCENTAGE)
   {
-    float ep = (100/255)*firstByte;
+    float ep = (100/255)* (float) firstByte;
     return ep;
   }
   else if (pid == FUEL_LEVEL)
@@ -97,17 +108,12 @@ float convertOBDData(char firstByte, char secondByte, int pid)
   }
   else
   {
-    float dc = 256*firstByte + secondByte;
-    return dc;
+    return firstByte;
   }
 }
 
 float readCANmessage()
-{
-  if (rxFlag == 1)
-  {
-    
-    rxFlag = 0;  
+{  
     msgRx.pui8MsgData = msgDataRx; // set pointer to rx buffer
     CANMessageGet(CAN1_BASE, 2, &msgRx, 0); // read CAN message object 2 from CAN peripheral
     
@@ -121,12 +127,6 @@ float readCANmessage()
       
     float value = convertOBDData(msgDataRx[3],msgDataRx[4],msgDataRx[2]);
     return (int)value;
-
-  }
-  else 
-  {
-    return -1;
-  }
 }
 
 void initCANMessages(void)
@@ -137,14 +137,14 @@ void initCANMessages(void)
     msgRx.ui32Flags = MSG_OBJ_RX_INT_ENABLE | MSG_OBJ_USE_ID_FILTER;
     msgRx.ui32MsgLen = 8; // allow up to 8 bytes
     msgRx.pui8MsgData = msgDataRx;
-    
-    //Init var for Tx messages  
-    msgDataTx = 0;  
+     
     // Load msg into CAN peripheral message object 2 so it can trigger interrupts on any matched rx messages
     CANMessageSet(CAN1_BASE, 2, &msgRx, MSG_OBJ_TYPE_RX);
     
-    msgDataTxPtr = (uint8_t*) &msgDataTx;
+    //msgDataTxPtr = (uint8_t*) &msgDataTx;
       
+    //Init var for Tx messages  
+    //msgDataTx = 0; 
     msgTx.ui32MsgID = 0x7DF;  //Request ID
     msgTx.ui32Flags = MSG_OBJ_TX_INT_ENABLE;
     msgTx.ui32MsgIDMask = 0;
@@ -213,7 +213,7 @@ void configureCAN(uint32_t g_ui32SysClock)
         
         CANDisable(CAN1_BASE);
 	CANInit(CAN1_BASE);
-	CANBitRateSet(CAN1_BASE,g_ui32SysClock, 500000);  //Set 500kbps CAN
+	CANBitRateSet(CAN1_BASE,g_ui32SysClock, 250000);  //Set 250kbps CAN
         CANIntRegister(CAN1_BASE, CANIntHandler); // use dynamic vector table allocation
         IntMasterEnable();
 	CANIntEnable(CAN1_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);

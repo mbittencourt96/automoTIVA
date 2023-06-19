@@ -1,7 +1,17 @@
 #ifndef _RGB_H_
 #define _RGB_H_
 
-//RGB LED related function definitions
+/**************************************************************************/
+/*!
+    RGB.h
+
+  RGB LED related function definitions for the AutomoTIVA project implemented in TM4C1294XL Board
+
+  License: GNU General Public License v3.0
+
+  By: Mariana Junghans, from UTFPR Curitiba
+*/
+/**************************************************************************/
 
 //Enumeration with possible colors
 typedef enum {

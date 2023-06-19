@@ -35,7 +35,6 @@
 int contador_erro_internet = 0;
 int contador_erro_gps = 0;
 int contador_erro_rtc = 0;
-int contador_erro_mem = 0;
 
 //Enumeration with possible states
 typedef enum {
@@ -56,15 +55,11 @@ int fuel_level = 0;
 int th_pos = 0;
 int odometer = 0;
 int eth_percentage = 0;
-int pids[7];
 
 //System clock
 uint32_t g_ui32SysClock;
 
 STATE currentState = CONFIG;
-
-//Final String
-char pids_str[50];
 
  //GPS Strings
 char GPS_OutputStr[100];
@@ -73,9 +68,6 @@ char* outputStr;
 
 //Date string
 char* datetime_str;
-              
-
-int counter = 0;
 
           
 void main(void) {  
@@ -90,11 +82,11 @@ void main(void) {
               g_ui32SysClock = SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
                                               SYSCTL_OSC_MAIN |
                                              SYSCTL_USE_PLL |
-                                             SYSCTL_CFG_VCO_240), 120000000);
+                                             SYSCTL_CFG_VCO_240), 16000000);
               
               //Configure UART
               setupUART7(g_ui32SysClock,9600);
-            
+              setupUART5(g_ui32SysClock,9600);
               //Configure RGB Led
               setupPWM_LEDS(g_ui32SysClock);
               
@@ -111,18 +103,13 @@ void main(void) {
          
               //Configure RTC Module Peripheral (I2C Comm)
               RTC_begin_I2C(g_ui32SysClock);
-              RTC_adjust_time(23,5,5,26,15,0,0);                              //Change here according to current time
+              //RTC_adjust_time(23,6,7,18,18,0,0);                              //Change here according to current time
               
               //Configure CAN Peripheral (CAN Controller)
               configureCAN(g_ui32SysClock);
               //Initialize CAN Bus to wait for messages
               initCANMessages();
-              
-              //Init Flash Memory Queue
-              Queue *Segments = (Queue*) malloc(sizeof(Queue));              
-              initQueue(Segments);
-              eraseFlash();
-             
+            
               c = GREEN;
                
               //Blink Green LED
@@ -148,10 +135,7 @@ void main(void) {
               requestPID(ENGINE_RPM);
               delay_s(1);
               engine_rpm = readCANmessage();  //Read message that was received
-              
-              CANDisable(CAN1_BASE);
-              CANInit(CAN1_BASE);
-              CANEnable(CAN1_BASE);
+             
               //Request Engine Temperature PID
               requestPID(ENGINE_TEMPERATURE);
               delay_s(1);
@@ -181,29 +165,11 @@ void main(void) {
               requestPID(ETH_PERCENTAGE);
               delay_s(1);
               eth_percentage = readCANmessage();  //Read message that was received
-              
-              pids[0] = engine_rpm;
-              pids[1] = engine_temp;
-              pids[2] = vehicle_speed;
-              pids[3] = th_pos;
-              pids[4] = fuel_level;
-              pids[5] = odometer;
-              pids[6] = eth_percentage;
-              
-              if (engine_rpm == -1 && engine_temp == -1 &&  vehicle_speed == -1 &&
-                  th_pos == -1 && fuel_level == -1 && odometer == -1)  //None of the PIDs was received
-              {
-                c = RED;
-                blinkLED(c,1,1);
-                currentState = WAITING_PID;
-              }
-              else   //At least one PID was received
-              {                
-                c = GREEN;
-                //Blink Green LED
-                blinkLED(c,1,1);
-                currentState = WAITING_DATE;
-              }      
+             
+              c = GREEN;
+              //Blink Green LED
+              blinkLED(c,1,1);
+              currentState = WAITING_DATE;
               break;
           case WAITING_DATE:
              //Define as BLue LED
@@ -212,7 +178,6 @@ void main(void) {
              //Blink Blue LED for 2 times
              blinkLED(c,1,2);    
              //Datetime string
-             datetime_str = (char*) malloc(50*sizeof(char));
              datetime_str = RTC_now();
               
               if (strcmp(datetime_str,"Error") == 0)
@@ -236,7 +201,6 @@ void main(void) {
        
               break;
           case WAITING_GPS:
-           
             do{
               outputStr = GPS_Read_UART();
               contador_erro_gps++;
@@ -290,6 +254,9 @@ void main(void) {
             char* temp_str = (char*) malloc(length+1);
             sprintf(temp_str, "%d", engine_temp);
             
+             //Final String
+            char pids_str [50];
+            
             strncat(pids_str, rpm_str, strlen(rpm_str));
             strncat(pids_str, "*", 1);
             strncat(pids_str, veh_str, strlen(veh_str));
@@ -302,108 +269,54 @@ void main(void) {
             strncat(pids_str, "*", 1);
             strncat(pids_str, temp_str, strlen(temp_str));
             strncat(pids_str, "*", 1);
-            strncat(pids_str, GPS_OutputStr, strlen(GPS_OutputStr));
+            strncat(pids_str, th_str, strlen(th_str));
+            strncat(pids_str, "*", 1);
+            strncat(pids_str, location_str, strlen(location_str));
             strncat(pids_str, "*", 1);
             strncat(pids_str, datetime_str, strlen(datetime_str));
+            strncat(pids_str, "\n", 1);
+            strncat(pids_str, "\0", 1);
             
-            currentState = STORING;
+            currentState = SENDING;
             break;
-          case STORING:
-              contador_erro_gps = 0;
-              //Blink yellow LED
-              c = YELLOW;
-              blinkLED(c,1,2);
-              
-              bool stored = storeStringInFlash(pids_str,Segments);
-              
-              if(stored)
-              {
-                c = GREEN;
-                blinkLED(c,1,1);
-                currentState = SENDING;
-              }
-              else
-              {
-                contador_erro_mem++;
-                currentState = STORING;
-              }
-              
-              if (contador_erro_mem > 3) 
-              {
-                currentState = SENDING;
-                c = RED;
-                blinkLED(c,1,1);
-              }
-             
-              break;
           case SENDING:
-              contador_erro_mem = 0;
               c = YELLOW;
               
-              blinkLED(c,1,2);
+              blinkLED(c,1,2);        
+              char* result = " ";
               
-              int k = 0;
-              
-              while(k < Segments->size)
+              UARTSend(UART7_BASE,pids_str,strlen(pids_str)); //Send string with information to the ESP8266
+              //delay_s(2);
+              while (strcmp(result," ") == 0)
               {
-                uint32_t current_address;
-                
-                FlashSegment_t *curr = Segments->front;
-                current_address = curr->address;
-                
-                char* content = FlashRead(current_address);
-                
-                UARTSend(UART7_BASE,content,strlen(content));   //Send string with information to the ESP8266
-                
-                char confirmation[5];
-                
-                delay_s(2);
-                
-                char* result;
-                
-                do{
-                    result = UARTRead(UART7_BASE,confirmation);
-                    contador_erro_internet++;
-                    if (contador_erro_internet > 9)
-                    {
-                      break;
-                    }
-                  }while (strcmp(result," ") == 0);
-                  
-                  if (contador_erro_internet > 9)
-                  {
-                    break;
-                  }
-                  
-                while(curr != NULL) 
+                result = UARTRead(UART5_BASE);
+                contador_erro_internet++;
+                if (contador_erro_internet > 5)
                 {
-                  curr = curr->next;
+                  break;
                 }
-                
-                k++;
+
               }
-              
-              if (contador_erro_internet > 9)
-              {
-                 currentState = WAITING_PID;
-                 c = RED;
-                 blinkLED(c,1,1);
-              }
-              else
-              {
-                  currentState = SUCCESS;
-              }
-       
-              break;
+            if (contador_erro_internet > 5)
+            {
+               currentState = WAITING_PID;
+               c = RED;
+               blinkLED(c,1,1);         
+            }
+            else
+            {
+                currentState = SUCCESS;
+            }
+     
+            break;
           case SUCCESS:
             c = GREEN;
             blinkLED(c,1,2);
-            eraseFlash();
             delay_s(10);   
             currentState = WAITING_PID;
             break;
           default: 
-              break; 
+            break; 
           }  
           
       }

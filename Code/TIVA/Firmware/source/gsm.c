@@ -4,7 +4,7 @@
 
   Implementation of GSM-related functions (using SIM800C module) for the TM4C1294XL Board (TIVA)
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */

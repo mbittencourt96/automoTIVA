@@ -8,12 +8,12 @@
 
 #define CAN1_INT 2                                     // Set INT to pin 2
 
-#define SPEED_PIN A0
-#define RPM_PIN A1
-#define ETHANOL_PIN A2
-#define FUEL_PIN A3
-#define THROTTLE_PIN A3
-#define TEMP_PIN A3
+#define SPEED_PIN A1
+#define RPM_PIN A0
+#define ETHANOL_PIN A4
+#define FUEL_PIN A5
+#define THROTTLE_PIN A2
+#define TEMP_PIN A4
 
 MCP_CAN CAN1(9);                                      // Set CS to pin 9
 
@@ -50,9 +50,8 @@ byte uintLSB(unsigned int value)
 
 int convertSensorValue(int pid, int sensorValue)
 {
-
   Serial.println(sensorValue);
-
+  
   switch(pid)
   {
     case 5:  //Engine coolant temperature
@@ -61,7 +60,7 @@ int convertSensorValue(int pid, int sensorValue)
       //MIN VALUE = -40ºC
       //EQUATION => Temp = 0.25*sensorValue - 40
 
-      return (int) (0.25*sensorValue - 40);
+      return (int) (0.25*sensorValue);
       break;
     }   
     case 12:  //Engine RPM
@@ -70,7 +69,7 @@ int convertSensorValue(int pid, int sensorValue)
       //MIN VALUE = 0 rpm
       //EQUATION => Engine_rpm = 16*sensorValue
 
-        return (int) 16*sensorValue;
+        return (int) (16*sensorValue)*4;
         break;
     }
     case 17:   //Throttle position
@@ -79,7 +78,7 @@ int convertSensorValue(int pid, int sensorValue)
       //MIN VALUE = 0%
       //EQUATION => Throttle_position = 0.097*sensorValue
 
-        return (int) (0.097*sensorValue);
+        return (int) (0.097*sensorValue) * (255/100);
         break;
     }
     case 13:   //Vehicle speed
@@ -97,7 +96,7 @@ int convertSensorValue(int pid, int sensorValue)
       //MIN VALUE = 0%
       //EQUATION => Ethanol_percentage = 0.097*sensorValue
 
-        return (int) (0.097*sensorValue);
+        return (int) (0.097*sensorValue) * (255/100);
         break;
     }
     case 47:   //Fuel level
@@ -106,7 +105,7 @@ int convertSensorValue(int pid, int sensorValue)
       //MIN VALUE = 0%
       //EQUATION => Fuel_level = 0.097*sensorValue
 
-        return (int) (0.097*sensorValue);
+        return (int) (0.097*sensorValue) * (255/100);
         break;
     }
     default:
@@ -129,7 +128,7 @@ void setup()
   // CAN_500KBPS specifies a baud rate of 500 Kbps
   // MCP_16MHZ indicates a 16MHz oscillator (crystal) is used as a clock for the MCP2515 chip
   //           you need to check your MCP2515 circuit for the right frequency (MCP_8MHZ, MCP_16MHZ, MCP_20MHZ)
-  if(CAN_OK == CAN1.begin(MCP_ANY,CAN_500KBPS, MCP_8MHZ))                   
+  if(CAN_OK == CAN1.begin(MCP_ANY,CAN_250KBPS, MCP_8MHZ))                   
   {
       Serial.println("CAN BUS Shield init ok!");
       CAN1.setMode(MCP_NORMAL); // Set operation mode to normal so the MCP2515 sends acks to received data.
@@ -176,6 +175,7 @@ void loop()
             case 5:  //Engine coolant temperature
             {
                 ect = convertSensorValue(5,analogRead(TEMP_PIN));
+                //ect += 40;
                 byte ectSensor[8] = {3, 65, ENGINE_COOLANT_TEMPERATURE, ect ,0,0,0,0};
                 CAN1.sendMsgBuf(responseId, 0, 8, ectSensor);
                 Serial.println("Sending back the coolant temperature to device!"); 
@@ -215,7 +215,7 @@ void loop()
                 unsigned long elapsedTime = (currentTime - lastTime) / 1000;  //get the elapsed time in seconds
                 unsigned long deltaOdometer = (veh_speed/3.6) * elapsedTime;
                 odometer += deltaOdometer; 
-                byte odometerSensor[8] = {4, 65, ODOMETER, uintMSB(odometer), uintLSB(odometer),0,0,0};
+                byte odometerSensor[8] = {4, 65, ODOMETER, odometer, 0,0,0,0};
                 CAN1.sendMsgBuf(responseId, 0, 8, odometerSensor);
                 Serial.println("Sending back the odometer to device!");  
                 Serial.println(odometer);    

@@ -4,7 +4,7 @@
 
   Adaptation of the Arduino Library RTCLib by JeeLab (https://github.com/adafruit/RTClib) for the TM4C1294XL Board (TIVA)
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */
@@ -38,6 +38,7 @@ uint32_t ui32SysClock;
 uint8_t  ui8Count, ui8MasterBytesLength;
 uint32_t ui32TxArbSize, ui32RxArbSize;
 bool     bError;
+char datetime [50];
   
 //*****************************************************************************
 //
@@ -480,8 +481,6 @@ char* RTC_now(void)
   snprintf( month_str, length + 1, "%d", month );
   
   char* year_str = "2023";
-  
-  char datetime [20];
   
   char bar = '/';
   char dots = ':';

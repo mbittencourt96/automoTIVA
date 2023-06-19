@@ -4,7 +4,7 @@
 
   Implementation of RGB LED for the AutomoTIVA project implemented in TM4C1294XL Board
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */
@@ -104,7 +104,7 @@ void LEDturnON(Color c)
     PWMGenEnable(PWM0_BASE, PWM_GEN_3);
     
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 50% duty cycle for PWM4 (red)
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 50% duty cycle for PWM5 (green)
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.3); // 50% duty cycle for PWM5 (green)
     PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 0% duty cycle for PWM7 (blue)
     
     PWMOutputState(PWM0_BASE, PWM_OUT_4_BIT | PWM_OUT_5_BIT, true); // Enable PWM output channels

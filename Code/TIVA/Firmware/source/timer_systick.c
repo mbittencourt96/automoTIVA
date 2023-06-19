@@ -4,7 +4,7 @@
 
   Implementation of Timer for the AutomoTIVA project implemented in TM4C1294XL Board
 
-  License: TBD
+  License: GNU General Public License v3.0
 
   By: Mariana Junghans, from UTFPR Curitiba
 */
@@ -32,7 +32,7 @@ void setupTimer(void)
 {
   SysTickIntEnable();
   
-  SysTickPeriodSet(119999);   //Sets the period of SysTick timer
+  SysTickPeriodSet(15999);   //Sets the period of SysTick timer
 }
 
 extern void contadorTempo(void)
