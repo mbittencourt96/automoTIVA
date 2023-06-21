@@ -12,6 +12,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "gps.h"
 
 #include "driverlib/i2c.h"
@@ -33,10 +34,15 @@
 int i = 0;
 bool syncFlag = false;
 char outputString [150];
-char outputLatLong[10];
+char outputLatLong[30];
+char totalString[20];
 float dec_minutes;
+int integerPart;
+int decimalPartInt;
+float decimalPart;
 float dec_seconds;
 float dec_total;
+float decimalLatLong;
 char* lat;
 char* lng;
 
@@ -101,14 +107,18 @@ char* GPS_parse_coordinate(char* c)
 {
   //Parse latitude or longitude
   
-  for (int j = 0; j < 10; j++)
+  for (int j = 0; j < 30; j++)
   {
     outputLatLong[j] = '\0';
   }
   
+  for (int j = 0; j < 20; j++)
+  {
+    totalString[j] = '\0';
+  }
+  
   char degrees[3];
-  char minutes[3];
-  char seconds[5];
+  char minutes[9];
   char decimals[4];
   char minus = '-';
    
@@ -122,46 +132,64 @@ char* GPS_parse_coordinate(char* c)
     degrees[0] = c[2];
     degrees[1] = c[3];
     degrees[2] = '\0';
+    
+    minutes[0] = c[4];
+    minutes[1] = c[5];
+    minutes[2] = c[6];
+    minutes[3] = c[7];
+    minutes[4] = c[8];
+    minutes[5] = c[9];
+    minutes[6] = c[10];
+    minutes[7] = '\0';
   }
   else
   {
     degrees[0] = c[1];
     degrees[1] = c[2];
     degrees[2] = '\0';
+    
+    minutes[0] = c[3];
+    minutes[1] = c[4];
+    minutes[2] = c[5];
+    minutes[3] = c[6];
+    minutes[4] = c[7];
+    minutes[5] = c[8];
+    minutes[6] = c[9];
+    minutes[7] = c[10];
+    minutes[8] = '\0';
   }
   
-  strncat(outputLatLong,degrees,strlen(degrees));
+  int degreesInt;
+  degreesInt = atoi(degrees);
   
-  minutes[0] = c[3];
-  minutes[1] = c[4];
-  minutes[2] = '\0';
   
-  dec_minutes = atoi(minutes);
-  dec_minutes = dec_minutes/60;   //Convert minutes to decimals
   
-  seconds[0] = c[6];
-  seconds[1] = c[7];
-  seconds[2] = c[8];
-  seconds[3] = c[9];
-  seconds[4] = '\0';
-  
-  dec_seconds = atoi(seconds);
-  dec_seconds = (dec_seconds / 10000) * 60;  //Convert decimals to seconds
-  dec_seconds = dec_seconds / 3600; //Convert seconds to decimals 
-  
-  dec_total = dec_seconds + dec_minutes; //Sum the decimals 
-  
-  int dec_total_int = dec_total * 10000;  //Multiply by 10000 and convert to integer to allow conversion to string
+  dec_minutes = atof(minutes);
+  dec_minutes = dec_minutes/60.0;   //Convert minutes to decimals
  
-  char decimals_str[4];
-  sprintf(decimals_str, "%d", dec_total_int);  //Convert decimals from integer to string to allow concatenation
-   
+  decimalLatLong = degreesInt + dec_minutes;
+  
+  integerPart = (int) floor(decimalLatLong);
+  decimalPart = decimalLatLong - integerPart;
+  decimalPart = decimalPart * 100000;
+  
+  char integerPartString[5];
+  char decimalPartString[5];
+  
+  snprintf(integerPartString, sizeof(integerPartString), "%d", integerPart);
+  
+  decimalPartInt = (int) floor(decimalPart);
+  
+  sprintf(decimalPartString, "%d", decimalPartInt);
+  
+  strcat(totalString, integerPartString);
   char dot = '.';
-  
-  strncat(outputLatLong,&dot,1);
-  strncat(outputLatLong,decimals_str,strlen(decimals_str));
-  
-  outputLatLong[9] = '\0';
+  strncat(totalString,&dot,1);
+  strcat(totalString, decimalPartString);
+ 
+  strncat(outputLatLong,totalString,strlen(totalString));
+  int index = strlen(outputLatLong);
+  outputLatLong[index] = '\0';
   
   return outputLatLong;
 }

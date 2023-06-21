@@ -79,6 +79,8 @@
             <file>$TOOLKIT_DIR$\lib\rt7M_tl.a</file>
             <file>$PROJ_DIR$\Debug\Obj\source\startup_ewarm.o</file>
             <file>$PROJ_DIR$\..\..\..\..\..\TivaWare_C_Series-2.2.0.295\driverlib\uart.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_float_setup.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\math.h</file>
         </outputs>
         <file>
             <name>$PROJ_DIR$\source\gsm.c</name>
@@ -121,7 +123,7 @@
             <inputs>
                 <tool>
                     <name>ICCARM</name>
-                    <file> 70 47 20 53 59 39 58 37 38 56 11 66 27 46 69 30 21 32 26 43 35 23 25 34 73 19 31 28 45</file>
+                    <file> 70 47 20 53 59 39 58 37 38 56 75 74 11 66 27 46 69 30 21 32 26 43 35 23 25 34 73 19 31 28 45</file>
                 </tool>
             </inputs>
         </file>

@@ -106,7 +106,7 @@ void main(void) {
          
               //Configure RTC Module Peripheral (I2C Comm)
               RTC_begin_I2C(g_ui32SysClock);
-              //RTC_adjust_time(23,6,1,19,15,25,0);                              //Change here according to current time
+              //RTC_adjust_time(23,6,2,20,22,14,0);                              //Change here according to current time
               
               //Configure CAN Peripheral (CAN Controller)
               configureCAN(g_ui32SysClock);
@@ -206,15 +206,20 @@ void main(void) {
           case WAITING_GPS:
             do{
               outputStr = GPS_Read_UART();
-              contador_erro_gps++;
+              /*contador_erro_gps++;
               if (contador_erro_gps >= 15)
               {
                 break;
-              }
+              }*/
             }while ((strstr(outputStr,"$GPGGA") == NULL && strstr(outputStr,"$GNGGA") == NULL) || strlen(outputStr) < 58);
             
             strncpy(GPS_OutputStr,outputStr,strlen(outputStr));
             
+            c = GREEN;
+            blinkLED(c,1,1);   //Blink Green LED
+            outputStr = GPS_get_info(GPS_OutputStr);           
+            strncpy(location_str,outputStr,strlen(outputStr));
+            /*
             if (contador_erro_gps < 15)
             {
               c = GREEN;
@@ -227,7 +232,7 @@ void main(void) {
               c = RED;
               blinkLED(c,1,1);   //Blink Red LED
               strncpy(location_str," ", 1);
-            }
+            }*/
             
             int length = snprintf( NULL, 0, "%d", engine_rpm );
             char* rpm_str = (char*) malloc(length+1);
@@ -291,7 +296,7 @@ void main(void) {
               char* result = " ";
               
               UARTSend(UART7_BASE,pids_str,strlen(pids_str)); //Send string with information to the ESP8266
-              //delay_s(2);
+              delay_s(2);
               while (strstr(result,"OK") == NULL)
               {
                 result = UARTRead(UART5_BASE);
@@ -317,7 +322,7 @@ void main(void) {
           case SUCCESS:
             c = GREEN;
             blinkLED(c,1,2);
-            delay_s(10);   
+            delay_s(3);   
             currentState = WAITING_PID;
             break;
           default: 

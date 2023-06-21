@@ -50,7 +50,7 @@ byte uintLSB(unsigned int value)
 
 int convertSensorValue(int pid, int sensorValue)
 {
-  Serial.println(sensorValue);
+  //Serial.println(sensorValue);
   
   switch(pid)
   {
@@ -211,17 +211,8 @@ void loop()
             }
             case 49:   //Distance since DTC cleared
             {
-                currentTime = millis();
-                Serial.print("Current time  = ");
-                Serial.println(currentTime);
-                 Serial.print("Last time  = ");
-                Serial.println(lastTime);
-                unsigned long elapsedTime = (currentTime - lastTime);  //get the elapsed time in seconds
-                Serial.print("Elapsed time  = ");
-                Serial.println(elapsedTime);
+                unsigned long elapsedTime = 40000;  //get the elapsed time in seconds
                 float deltaOdometer = (veh_speed/3.6) * elapsedTime * 0.001;
-                Serial.print("Delta odometer  = ");
-                Serial.println(deltaOdometer);
                 odometer += deltaOdometer; 
                 byte odometerSensor[8] = {4, 65, ODOMETER, odometer, 0,0,0,0};
                 CAN1.sendMsgBuf(responseId, 0, 8, odometerSensor);
@@ -254,6 +245,5 @@ void loop()
             }
     }
     delay(500);
-    lastTime = millis();
 }
 }
