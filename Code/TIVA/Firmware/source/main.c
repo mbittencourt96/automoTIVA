@@ -206,21 +206,17 @@ void main(void) {
           case WAITING_GPS:
             do{
               outputStr = GPS_Read_UART();
-              /*contador_erro_gps++;
-              if (contador_erro_gps >= 15)
+              contador_erro_gps++;
+              if (contador_erro_gps >= 5)
               {
                 break;
-              }*/
+              }
+              delay_s(2);
             }while ((strstr(outputStr,"$GPGGA") == NULL && strstr(outputStr,"$GNGGA") == NULL) || strlen(outputStr) < 58);
             
             strncpy(GPS_OutputStr,outputStr,strlen(outputStr));
-            
-            c = GREEN;
-            blinkLED(c,1,1);   //Blink Green LED
-            outputStr = GPS_get_info(GPS_OutputStr);           
-            strncpy(location_str,outputStr,strlen(outputStr));
-            /*
-            if (contador_erro_gps < 15)
+           
+            if (contador_erro_gps < 5)
             {
               c = GREEN;
               blinkLED(c,1,1);   //Blink Green LED
@@ -232,7 +228,7 @@ void main(void) {
               c = RED;
               blinkLED(c,1,1);   //Blink Red LED
               strncpy(location_str," ", 1);
-            }*/
+            }
             
             int length = snprintf( NULL, 0, "%d", engine_rpm );
             char* rpm_str = (char*) malloc(length+1);
