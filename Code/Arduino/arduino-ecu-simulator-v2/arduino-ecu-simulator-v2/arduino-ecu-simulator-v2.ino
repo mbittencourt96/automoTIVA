@@ -214,7 +214,7 @@ void loop()
                 unsigned long elapsedTime = 40000;  //get the elapsed time in seconds
                 float deltaOdometer = (veh_speed/3.6) * elapsedTime * 0.001;
                 odometer += deltaOdometer; 
-                byte odometerSensor[8] = {4, 65, ODOMETER, odometer, 0,0,0,0};
+                byte odometerSensor[8] = {4, 65, ODOMETER, uintMSB(odometer), uintLSB(odometer),0,0,0};
                 CAN1.sendMsgBuf(responseId, 0, 8, odometerSensor);
                 Serial.println("Sending back the odometer to device!");  
                 Serial.println(odometer);    

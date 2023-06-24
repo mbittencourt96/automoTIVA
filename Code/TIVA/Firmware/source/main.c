@@ -106,7 +106,7 @@ void main(void) {
          
               //Configure RTC Module Peripheral (I2C Comm)
               RTC_begin_I2C(g_ui32SysClock);
-              //RTC_adjust_time(23,6,2,20,22,14,0);                              //Change here according to current time
+              //RTC_adjust_time(23,6,6,24,16,30,0);                              //Change here according to current time
               
               //Configure CAN Peripheral (CAN Controller)
               configureCAN(g_ui32SysClock);
@@ -205,14 +205,14 @@ void main(void) {
               break;
           case WAITING_GPS:
             do{
+              delay_s(1);
               outputStr = GPS_Read_UART();
               contador_erro_gps++;
               if (contador_erro_gps >= 5)
               {
                 break;
               }
-              delay_s(2);
-            }while ((strstr(outputStr,"$GPGGA") == NULL && strstr(outputStr,"$GNGGA") == NULL) || strlen(outputStr) < 58);
+            }while (strstr(outputStr,"$GNGGA") == NULL || strlen(outputStr) < 58);
             
             strncpy(GPS_OutputStr,outputStr,strlen(outputStr));
            
@@ -286,13 +286,14 @@ void main(void) {
             currentState = SENDING;
             break;
           case SENDING:
+              contador_erro_gps = 0;
               c = YELLOW;
               
-              blinkLED(c,1,2);        
+              blinkLED(c,1,1);        
               char* result = " ";
               
               UARTSend(UART7_BASE,pids_str,strlen(pids_str)); //Send string with information to the ESP8266
-              delay_s(2);
+              delay_s(1);
               while (strstr(result,"OK") == NULL)
               {
                 result = UARTRead(UART5_BASE);

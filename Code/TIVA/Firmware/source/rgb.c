@@ -103,9 +103,9 @@ void LEDturnON(Color c)
     PWMGenEnable(PWM0_BASE, PWM_GEN_2);
     PWMGenEnable(PWM0_BASE, PWM_GEN_3);
     
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.5); // 50% duty cycle for PWM4 (red)
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 0.3); // 50% duty cycle for PWM5 (green)
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0); // 0% duty cycle for PWM7 (blue)
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 1); // 50% duty cycle for PWM4 (red)
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_2) * 1); // 50% duty cycle for PWM5 (green)
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, PWMGenPeriodGet(PWM0_BASE, PWM_GEN_3) * 0.2); // 0% duty cycle for PWM7 (blue)
     
     PWMOutputState(PWM0_BASE, PWM_OUT_4_BIT | PWM_OUT_5_BIT, true); // Enable PWM output channels
     

@@ -45,6 +45,8 @@ volatile bool errFlag = 0;
 int firstByte = 0;
 int secondByte = 0;
 
+float dist;
+
 //CAN message objs
 tCANMsgObject msgRx; // the CAN msg Rx object
 tCANMsgObject msgTx; // the CAN msg Tx object
@@ -108,7 +110,8 @@ float convertOBDData(char firstByte, char secondByte, int pid)
   }
   else
   {
-    return firstByte;
+    dist = (firstByte << 8) | secondByte;
+    return dist;
   }
 }
 
