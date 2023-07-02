@@ -4,11 +4,13 @@ Welcome to the "AutomoTIVA" repository! Here are all the files you will need to 
 "AutomoTIVA" is a project developed as a final project for the Electronics Engineering course in the Federal Technological University of Parana (UTFPR) - Brazil.
 It is a shield for the TIVA EK-TM4C1294XL Evaluation Board, that is capable of reading CAN bus and also has GPS, RTC and Wi-fi capabilities.
 A shield for the Arduino Uno was also developed to simulate a vehicle sending OBD messages in the CAN Bus.
+![Board](Images/placaFinal2.jpeg)
 # Why it is useful
 The boards can be used in the university, to teach students how the CAN and OBD protocol works (and also the TIVA board and peripherals) in a pratical and easy way. 
 But of course, with some adjustments, you can even use this shield in real vehicles! 
 # Testing in real vehicles
-For testing with real vehicles, I recommend to build a 12V-5V regulator (to connect in the 12V of the OBD) and to also connect the CANH and CANL lines in the shield to the OBD connector. The board was not tested in a real vehicle yet, so be careful, especially when building the regulator, to protect the board from damage. <br>
+For testing with real vehicles, I recommend to build a 12V-5V regulator (to connect in the 12V of the OBD) and to also connect the CANH and CANL lines in the shield to the OBD connector. The board was not tested in a real vehicle yet, so be careful, especially when building the regulator, to protect the board from damage. An example of regulator is in the image below.<br>
+![regulator](Images/regulator.png)
   ### CAN ID
   Another thing about testing in real vehicles, some vehicles may have an 29-bit CAN ID, which is not compatible with the code I built for the TIVA. So, if the vehicle you are testing is 29-bit, you will have to modify the code to handle this situation. I suggest that you build some code to identify the CAN ID length and then with this information you can do a "IF" or "SWITCH" statement to choose how to handle CAN messages. <br>
   ### OBD messages
@@ -32,7 +34,13 @@ For testing with real vehicles, I recommend to build a 12V-5V regulator (to conn
 ->1 MCP2515 CAN Module<br>
 ->6 10k ohms potenciometers<br>
 ### Connections
-Soon I will provide the connection diagrams!
+
+![connections](Images/perifericos.png)
+
+![connArduino](Images/comunicacaoCAN.png)
+
+In the Arduino, besides the connection with the CAN module, you need to connect the middle pin of each potentiometer to the A0-A5 analog inputs, and the other pins of the potentiometers to VCC and GND of Arduino.
+
 ### Final steps
  You must, after connecting all the parts together, connect the boards to the USB ports in your computer and load the programs in the respective boards. And then you are ready to go!
 
