@@ -37,7 +37,7 @@ For testing with real vehicles, I recommend to build a 12V-5V regulator (to conn
 
 ![connections](Images/perifericos.png)
 
-![connArduino](Images/comunicacaoCAN.png)
+![connArduino](Images/arduinoConnection.png)
 
 In the Arduino, besides the connection with the CAN module, you need to connect the middle pin of each potentiometer to the A0-A5 analog inputs, and the other pins of the potentiometers to VCC and GND of Arduino.
 
